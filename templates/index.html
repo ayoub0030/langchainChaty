@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #5873ca;
+        }
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #e9ecef;
+            color: black;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #messageInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        #sendButton {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Chatbot</h1>
+        <div id="chatBox" class="chat-box"></div>
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const chatBox = document.getElementById('chatBox');
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-message';
+            userMsg.textContent = message;
+            chatBox.appendChild(userMsg);
+            
+            // Clear input
+            input.value = '';
+            
+            // Show loading message
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'message bot-message loading';
+            loadingMsg.textContent = 'Thinking...';
+            chatBox.appendChild(loadingMsg);
+            
+            // Scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                // Remove loading message
+                chatBox.removeChild(loadingMsg);
+                
+                // Add bot response
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot-message';
+                botMsg.textContent = data.responseaichat || data.error;
+                chatBox.appendChild(botMsg);
+                
+            } catch (error) {
+                // Remove loading message
+                chatBox.removeChild(loadingMsg);
+                
+                // Add error message
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'message bot-message';
+                errorMsg.textContent = 'Error: Could not connect to server';
+                chatBox.appendChild(errorMsg);
+            }
+            
+            // Scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // Focus on input when page loads
+        window.onload = function() {
+            document.getElementById('messageInput').focus();
+        };
+    </script>
+</body>
+</html>
